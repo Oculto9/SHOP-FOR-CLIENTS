@@ -1,0 +1,47 @@
+// Exportar backup
+function exportarBackup() {
+    const datos = localStorage.getItem('paquetes');
+    const blob = new Blob([datos], {type: 'application/json'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `backup_paquetes_${Date.now()}.json`;
+    link.click();
+}
+
+// Importar backup
+function importarBackup(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        localStorage.setItem('paquetes', e.target.result);
+        cargarPaquetes();
+        actualizarTabla();
+        alert('Backup restaurado correctamente');
+    };
+    reader.readAsText(file);
+}
+
+// Backup automático cada 30 segundos
+function backupAutomatico() {
+    const datos = localStorage.getItem('paquetes');
+    if (datos) {
+        sessionStorage.setItem('backup_auto', JSON.stringify({
+            timestamp: new Date().toISOString(),
+            datos: JSON.parse(datos)
+        }));
+    }
+}
+setInterval(backupAutomatico, 30000);
+
+// Restaurar backup automático al cargar
+function restaurarBackupAuto() {
+    const backup = sessionStorage.getItem('backup_auto');
+    if (backup && !localStorage.getItem('paquetes')) {
+        const data = JSON.parse(backup);
+        if (confirm(`Se encontró backup del ${data.timestamp}. ¿Restaurar?`)) {
+            localStorage.setItem('paquetes', JSON.stringify(data.datos));
+            location.reload();
+        }
+    }
+}
+restaurarBackupAuto();
